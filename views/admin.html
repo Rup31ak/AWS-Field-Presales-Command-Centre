@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Console — AWS Field Presales Command Centre</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-container">
+    <a href="/" class="nav-brand">
+      <img src="/assets/redington-logo.png" alt="Redington" class="nav-logo">
+      <div class="nav-divider"></div>
+      <div class="nav-titles">
+        <h1>Command Centre</h1>
+        <p>AWS Field Presales</p>
+      </div>
+    </a>
+    <div class="nav-actions">
+      <a href="/" class="nav-link">Launchpad</a>
+      <a href="/admin" class="nav-link active">Admin Console</a>
+      <a href="/profile" class="nav-link">My Profile</a>
+      <div class="user-badge">
+        <span id="navUserName">Admin</span>
+        <span class="user-role-tag">ADMIN</span>
+      </div>
+      <button id="logoutBtn" class="btn btn-outline btn-sm">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="page-head" style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px;">
+    <div>
+      <h2>Presales Team Administration</h2>
+      <p>Manage team member accounts, assign application access, and generate secure temporary credentials.</p>
+    </div>
+    <button id="openCreateUserBtn" class="btn btn-primary">
+      + Create Team User
+    </button>
+  </div>
+
+  <div id="adminAlert" class="alert" style="display:none;"></div>
+
+  <!-- Users Table Card -->
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name / Username</th>
+          <th>Corporate Email</th>
+          <th>Title & Location</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Tech Horizon</th>
+          <th>Monthly Report</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="usersTableBody">
+        <tr>
+          <td colspan="8" style="text-align:center; padding: 30px; color: var(--muted);">Loading team users...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<!-- Modal: Create User -->
+<div id="createUserModal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 style="color:var(--green-900); font-weight:800;">Create Presales Team User</h3>
+      <button class="modal-close" data-close="createUserModal">&times;</button>
+    </div>
+    <div id="createAlert" class="alert alert-danger" style="display:none;"></div>
+    <form id="createUserForm">
+      <div class="form-group">
+        <label class="form-label" for="createFullName">Full Name *</label>
+        <input type="text" id="createFullName" class="form-control" placeholder="e.g. Rahul Sharma" required>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+        <div class="form-group">
+          <label class="form-label" for="createUsername">Username *</label>
+          <input type="text" id="createUsername" class="form-control" placeholder="e.g. rsharma" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="createEmail">Corporate Email *</label>
+          <input type="email" id="createEmail" class="form-control" placeholder="rahul@redington.com" required>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+        <div class="form-group">
+          <label class="form-label" for="createDesignation">Designation</label>
+          <input type="text" id="createDesignation" class="form-control" placeholder="e.g. Cloud Solutions Architect">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="createLocation">Location</label>
+          <input type="text" id="createLocation" class="form-control" placeholder="e.g. Mumbai / Bangalore">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+        <div class="form-group">
+          <label class="form-label" for="createRole">Role</label>
+          <select id="createRole" class="form-control">
+            <option value="User" selected>User (Standard Access)</option>
+            <option value="Admin">Admin (Full Team Management)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="createStatus">Account Status</label>
+          <select id="createStatus" class="form-control">
+            <option value="Active" selected>Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="background:var(--bg-soft); padding:16px; border-radius:var(--radius-md); border:1px solid var(--border);">
+        <label class="form-label" style="margin-bottom:12px;">Application Access Permissions</label>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="form-check">
+            <input type="checkbox" id="createTechHorizon" checked>
+            <span><b>AWS Tech Horizon Access</b> (Monthly intelligence publication & designer)</span>
+          </label>
+          <label class="form-check">
+            <input type="checkbox" id="createMonthlyReport" checked>
+            <span><b>Monthly Report Generator Access</b> (Executive reporting tool)</span>
+          </label>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+        <button type="button" class="btn btn-outline" data-close="createUserModal">Cancel</button>
+        <button type="submit" id="saveUserBtn" class="btn btn-primary">Generate User & Credentials</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Credentials Ready (Download TXT) -->
+<div id="credentialModal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 style="color:var(--green-900); font-weight:800;">Temporary Credentials Generated</h3>
+      <button class="modal-close" data-close="credentialModal">&times;</button>
+    </div>
+    
+    <div class="alert alert-success">
+      Account successfully created. A cryptographically secure 16-character temporary password was generated.
+    </div>
+
+    <div style="background:var(--bg-soft); border:1px solid var(--border); border-radius:var(--radius-md); padding:18px; margin-bottom:20px;">
+      <div style="margin-bottom:8px;"><strong>Full Name:</strong> <span id="credFullName"></span></div>
+      <div style="margin-bottom:8px;"><strong>Username:</strong> <span id="credUsername"></span></div>
+      <div style="margin-bottom:12px;">
+        <strong>Temporary Password:</strong>
+        <code id="credPassword" style="background:#fff; padding:4px 8px; border-radius:4px; border:1px solid var(--border); font-size:15px; font-weight:700; color:var(--green-900); margin-left:6px;"></code>
+      </div>
+      <p style="font-size:12px; color:var(--muted); line-height:1.4;">
+        Mandatory password change is required upon first login. Download and transmit the credential file to the user securely.
+      </p>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <button id="downloadTxtBtn" class="btn btn-primary">
+        📥 Download Credentials (.txt)
+      </button>
+      <button type="button" class="btn btn-outline" data-close="credentialModal">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit User -->
+<div id="editUserModal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 style="color:var(--green-900); font-weight:800;">Edit Team User</h3>
+      <button class="modal-close" data-close="editUserModal">&times;</button>
+    </div>
+    <div id="editAlert" class="alert alert-danger" style="display:none;"></div>
+    <form id="editUserForm">
+      <input type="hidden" id="editUserId">
+      <div class="form-group">
+        <label class="form-label" for="editFullName">Full Name *</label>
+        <input type="text" id="editFullName" class="form-control" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="editEmail">Corporate Email *</label>
+        <input type="email" id="editEmail" class="form-control" required>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+        <div class="form-group">
+          <label class="form-label" for="editDesignation">Designation</label>
+          <input type="text" id="editDesignation" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editLocation">Location</label>
+          <input type="text" id="editLocation" class="form-control">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+        <div class="form-group">
+          <label class="form-label" for="editRole">Role</label>
+          <select id="editRole" class="form-control">
+            <option value="User">User</option>
+            <option value="Admin">Admin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editStatus">Status</label>
+          <select id="editStatus" class="form-control">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="background:var(--bg-soft); padding:16px; border-radius:var(--radius-md); border:1px solid var(--border);">
+        <label class="form-label" style="margin-bottom:12px;">Application Access Permissions</label>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="form-check">
+            <input type="checkbox" id="editTechHorizon">
+            <span>AWS Tech Horizon Access</span>
+          </label>
+          <label class="form-check">
+            <input type="checkbox" id="editMonthlyReport">
+            <span>Monthly Report Generator Access</span>
+          </label>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+        <button type="button" class="btn btn-outline" data-close="editUserModal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<footer class="footer">
+  AWS Field Presales Command Centre · Administrator Console · Internal Use Only
+</footer>
+
+<script>
+let usersList = [];
+let currentCredentialBlob = null;
+let currentCredentialFilename = '';
+
+async function loadUsers() {
+  const tbody = document.getElementById('usersTableBody');
+  try {
+    const res = await fetch('/api/admin/users');
+    if (!res.ok) {
+      if (res.status === 403) {
+        window.location.href = '/';
+        return;
+      }
+      throw new Error('Failed to load users');
+    }
+    const data = await res.json();
+    usersList = data.users || [];
+
+    if (!usersList.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px;">No team users registered yet.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = usersList.map(u => `
+      <tr>
+        <td>
+          <div style="font-weight:700; color:var(--green-900);">${escapeHtml(u.full_name)}</div>
+          <div style="font-size:12px; color:var(--muted);">@${escapeHtml(u.username)}</div>
+        </td>
+        <td>${escapeHtml(u.email)}</td>
+        <td>
+          <div>${escapeHtml(u.designation || 'Presales')}</div>
+          <div style="font-size:12px; color:var(--muted);">${escapeHtml(u.location || 'India')}</div>
+        </td>
+        <td>
+          <span class="user-role-tag" style="background:${u.role === 'Admin' ? 'var(--green-900)' : 'var(--muted)'};">
+            ${u.role}
+          </span>
+        </td>
+        <td>
+          <span class="app-status-badge ${u.status === 'Active' ? 'status-active' : 'status-restricted'}">
+            ${u.status}
+          </span>
+        </td>
+        <td>
+          ${u.tech_horizon_access === 1 
+            ? '<span style="color:var(--green-700); font-weight:700;">✓ Yes</span>' 
+            : '<span style="color:var(--muted);">✕ No</span>'}
+        </td>
+        <td>
+          ${u.monthly_report_access === 1 
+            ? '<span style="color:var(--green-700); font-weight:700;">✓ Yes</span>' 
+            : '<span style="color:var(--muted);">✕ No</span>'}
+        </td>
+        <td>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-outline btn-sm" onclick="openEditModal(${u.id})">Edit</button>
+            <button class="btn btn-outline btn-sm" style="color:var(--warning);" onclick="resetUserPassword(${u.id})">Reset PW</button>
+            <button class="btn btn-outline btn-sm" style="color:var(--danger);" onclick="deleteUser(${u.id}, '${escapeHtml(u.username)}')">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--danger); padding:30px;">Failed to load user records.</td></tr>';
+  }
+}
+
+function openEditModal(userId) {
+  const user = usersList.find(u => u.id === userId);
+  if (!user) return;
+
+  document.getElementById('editUserId').value = user.id;
+  document.getElementById('editFullName').value = user.full_name;
+  document.getElementById('editEmail').value = user.email;
+  document.getElementById('editDesignation').value = user.designation || '';
+  document.getElementById('editLocation').value = user.location || '';
+  document.getElementById('editRole').value = user.role;
+  document.getElementById('editStatus').value = user.status;
+  document.getElementById('editTechHorizon').checked = user.tech_horizon_access === 1;
+  document.getElementById('editMonthlyReport').checked = user.monthly_report_access === 1;
+  document.getElementById('editAlert').style.display = 'none';
+
+  document.getElementById('editUserModal').classList.add('active');
+}
+
+document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const alertBox = document.getElementById('editAlert');
+  alertBox.style.display = 'none';
+
+  const userId = document.getElementById('editUserId').value;
+  const payload = {
+    full_name: document.getElementById('editFullName').value.trim(),
+    email: document.getElementById('editEmail').value.trim(),
+    designation: document.getElementById('editDesignation').value.trim(),
+    location: document.getElementById('editLocation').value.trim(),
+    role: document.getElementById('editRole').value,
+    status: document.getElementById('editStatus').value,
+    tech_horizon_access: document.getElementById('editTechHorizon').checked ? 1 : 0,
+    monthly_report_access: document.getElementById('editMonthlyReport').checked ? 1 : 0
+  };
+
+  try {
+    const res = await fetch(`/api/admin/users/${userId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      alertBox.textContent = data.error || 'Failed to update user';
+      alertBox.style.display = 'block';
+      return;
+    }
+    document.getElementById('editUserModal').classList.remove('active');
+    loadUsers();
+  } catch (err) {
+    alertBox.textContent = 'Server error updating user.';
+    alertBox.style.display = 'block';
+  }
+});
+
+async function resetUserPassword(userId) {
+  const user = usersList.find(u => u.id === userId);
+  if (!user) return;
+
+  if (!confirm(`Generate a new 16-character temporary password for ${user.full_name} (@${user.username})? All existing sessions will be terminated.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/admin/users/${userId}/reset-password`, { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      alert(data.error || 'Failed to reset password.');
+      return;
+    }
+
+    showCredentialModal(user.full_name, user.username, data.temporaryPassword, data.credentialTxt);
+    loadUsers();
+  } catch (err) {
+    alert('Failed to reset password.');
+  }
+}
+
+async function deleteUser(userId, username) {
+  if (!confirm(`Are you sure you want to permanently delete user @${username}? This cannot be undone.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      alert(data.error || 'Failed to delete user.');
+      return;
+    }
+    loadUsers();
+  } catch (err) {
+    alert('Server error deleting user.');
+  }
+}
+
+document.getElementById('openCreateUserBtn').addEventListener('click', () => {
+  document.getElementById('createUserForm').reset();
+  document.getElementById('createAlert').style.display = 'none';
+  document.getElementById('createUserModal').classList.add('active');
+});
+
+document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const alertBox = document.getElementById('createAlert');
+  alertBox.style.display = 'none';
+
+  const payload = {
+    full_name: document.getElementById('createFullName').value.trim(),
+    username: document.getElementById('createUsername').value.trim(),
+    email: document.getElementById('createEmail').value.trim(),
+    designation: document.getElementById('createDesignation').value.trim(),
+    location: document.getElementById('createLocation').value.trim(),
+    role: document.getElementById('createRole').value,
+    status: document.getElementById('createStatus').value,
+    tech_horizon_access: document.getElementById('createTechHorizon').checked ? 1 : 0,
+    monthly_report_access: document.getElementById('createMonthlyReport').checked ? 1 : 0
+  };
+
+  try {
+    const res = await fetch('/api/admin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      alertBox.textContent = data.error || 'Failed to create user.';
+      alertBox.style.display = 'block';
+      return;
+    }
+
+    document.getElementById('createUserModal').classList.remove('active');
+    loadUsers();
+
+    // Show Credential Modal
+    showCredentialModal(payload.full_name, payload.username, data.temporaryPassword, data.credentialTxt);
+
+  } catch (err) {
+    alertBox.textContent = 'Server communication error creating user.';
+    alertBox.style.display = 'block';
+  }
+});
+
+function showCredentialModal(fullName, username, tempPassword, credentialTxt) {
+  document.getElementById('credFullName').textContent = fullName;
+  document.getElementById('credUsername').textContent = username;
+  document.getElementById('credPassword').textContent = tempPassword;
+
+  currentCredentialBlob = new Blob([credentialTxt], { type: 'text/plain;charset=utf-8' });
+  currentCredentialFilename = `Command_Centre_Credentials_${username}.txt`;
+
+  document.getElementById('credentialModal').classList.add('active');
+}
+
+document.getElementById('downloadTxtBtn').addEventListener('click', () => {
+  if (!currentCredentialBlob) return;
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(currentCredentialBlob);
+  link.download = currentCredentialFilename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+});
+
+// Modal close bindings
+document.querySelectorAll('[data-close]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.getAttribute('data-close');
+    document.getElementById(target).classList.remove('active');
+  });
+});
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+  } finally {
+    window.location.href = '/login';
+  }
+});
+
+loadUsers();
+</script>
+
+</body>
+</html>

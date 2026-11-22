@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>User Profile & Security — AWS Field Presales Command Centre</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-container">
+    <a href="/" class="nav-brand">
+      <img src="/assets/redington-logo.png" alt="Redington" class="nav-logo">
+      <div class="nav-divider"></div>
+      <div class="nav-titles">
+        <h1>Command Centre</h1>
+        <p>AWS Field Presales</p>
+      </div>
+    </a>
+    <div class="nav-actions">
+      <a href="/" class="nav-link">Launchpad</a>
+      <a href="/admin" id="adminNavLink" class="nav-link" style="display:none;">Admin Console</a>
+      <a href="/profile" class="nav-link active">My Profile</a>
+      <div class="user-badge">
+        <span id="navUserName">Loading...</span>
+        <span id="navUserRole" class="user-role-tag">USER</span>
+      </div>
+      <button id="logoutBtn" class="btn btn-outline btn-sm">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="page-head">
+    <h2>Account Profile & Security</h2>
+    <p>Manage your presales identity details and maintain your account security credentials.</p>
+  </div>
+
+  <!-- Mandatory Password Change Banner (displayed on ?must_change=1 or when forced) -->
+  <div id="mandatoryAlert" class="alert alert-warning" style="display:none; font-weight:600;">
+    &#9888;&#65039; <strong>Action Required:</strong> You are currently logged in with a temporary system password. You must establish a new private password below before accessing Command Centre applications.
+  </div>
+
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px; align-items: start;">
+    
+    <!-- Profile Information Card -->
+    <div class="card">
+      <h3 class="card-title">Presales Identity</h3>
+      <p class="card-desc">Personal details displayed on generated executive briefs and publications.</p>
+
+      <div id="profileAlert" class="alert" style="display:none;"></div>
+
+      <form id="profileForm">
+        <div class="form-group">
+          <label class="form-label" for="username">Username</label>
+          <input type="text" id="username" class="form-control" style="background:#F3F4F6; cursor:not-allowed;" readonly>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Corporate Email</label>
+          <input type="email" id="email" class="form-control" style="background:#F3F4F6; cursor:not-allowed;" readonly>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="fullName">Full Name *</label>
+          <input type="text" id="fullName" class="form-control" placeholder="e.g. Rupak Kumar" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="designation">Designation / Title</label>
+          <input type="text" id="designation" class="form-control" placeholder="e.g. Lead AWS Solutions Architect">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="location">Location / Region</label>
+          <input type="text" id="location" class="form-control" placeholder="e.g. Chennai, India">
+        </div>
+
+        <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-light);">
+          <div style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Portal Entitlements</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <span id="badgeTechHorizon" class="app-status-badge status-active">AWS Tech Horizon</span>
+            <span id="badgeMonthlyReport" class="app-status-badge status-active">Report Generator</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <button type="submit" id="saveProfileBtn" class="btn btn-primary" style="width:100%;">
+            Save Profile Changes
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Security & Password Change Card -->
+    <div class="card" id="passwordCard">
+      <h3 class="card-title">Security & Password</h3>
+      <p class="card-desc">Update your login password. Passwords must be at least 8 characters long.</p>
+
+      <div id="passwordAlert" class="alert" style="display:none;"></div>
+
+      <form id="passwordForm">
+        <div class="form-group">
+          <label class="form-label" for="currentPassword">Current Password *</label>
+          <input type="password" id="currentPassword" class="form-control" placeholder="Enter current temporary or existing password" required autocomplete="current-password">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="newPassword">New Password *</label>
+          <input type="password" id="newPassword" class="form-control" placeholder="Minimum 8 characters" minlength="8" required autocomplete="new-password">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="confirmPassword">Confirm New Password *</label>
+          <input type="password" id="confirmPassword" class="form-control" placeholder="Re-enter new password" minlength="8" required autocomplete="new-password">
+        </div>
+
+        <div style="background:var(--bg-soft); border:1px solid var(--border); border-radius:var(--radius-md); padding:12px 14px; margin-bottom:18px; font-size:12px; color:var(--ink-2);">
+          <strong>Security recommendations:</strong>
+          <ul style="padding-left:18px; margin-top:4px;">
+            <li>Use at least 8 characters with a mix of letters, numbers, and symbols.</li>
+            <li>Do not reuse passwords across different environments.</li>
+          </ul>
+        </div>
+
+        <div>
+          <button type="submit" id="updatePasswordBtn" class="btn btn-primary" style="width:100%;">
+            Update Password
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</main>
+
+<footer class="footer">
+  &copy; 2026 AWS Field Presales Team &bull; Redington Limited &bull; Direct EC2 Deployment
+</footer>
+
+<script>
+  let isMandatoryChange = false;
+
+  // Check URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('must_change') === '1') {
+    isMandatoryChange = true;
+    document.getElementById('mandatoryAlert').style.display = 'block';
+    setTimeout(() => {
+      document.getElementById('currentPassword').focus();
+    }, 300);
+  }
+
+  // Load Profile on Page Init
+  async function loadProfile() {
+    try {
+      const res = await fetch('/api/profile', {
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (res.status === 401) {
+        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+      }
+
+      const data = await res.json();
+      if (!data.ok || !data.user) {
+        return;
+      }
+
+      const u = data.user;
+      document.getElementById('navUserName').textContent = u.full_name || u.username;
+      document.getElementById('navUserRole').textContent = u.role.toUpperCase();
+
+      if (u.role === 'Admin') {
+        const adminLink = document.getElementById('adminNavLink');
+        if (adminLink) adminLink.style.display = 'inline-block';
+      }
+
+      if (u.must_change_password === 1) {
+        isMandatoryChange = true;
+        document.getElementById('mandatoryAlert').style.display = 'block';
+      }
+
+      // Populate Form Fields
+      document.getElementById('username').value = u.username || '';
+      document.getElementById('email').value = u.email || '';
+      document.getElementById('fullName').value = u.full_name || '';
+      document.getElementById('designation').value = u.designation || '';
+      document.getElementById('location').value = u.location || '';
+
+      // Entitlements
+      const thBadge = document.getElementById('badgeTechHorizon');
+      if (u.tech_horizon_access === 1) {
+        thBadge.className = 'app-status-badge status-active';
+        thBadge.textContent = 'AWS Tech Horizon: Enabled';
+      } else {
+        thBadge.className = 'app-status-badge status-restricted';
+        thBadge.textContent = 'AWS Tech Horizon: Restricted';
+      }
+
+      const mrBadge = document.getElementById('badgeMonthlyReport');
+      if (u.monthly_report_access === 1) {
+        mrBadge.className = 'app-status-badge status-active';
+        mrBadge.textContent = 'Report Generator: Enabled';
+      } else {
+        mrBadge.className = 'app-status-badge status-restricted';
+        mrBadge.textContent = 'Report Generator: Restricted';
+      }
+
+    } catch (err) {
+      console.error('Failed to load profile:', err);
+    }
+  }
+
+  // Handle Profile Form Submit
+  document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const alertBox = document.getElementById('profileAlert');
+    const submitBtn = document.getElementById('saveProfileBtn');
+
+    alertBox.style.display = 'none';
+    alertBox.className = 'alert';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
+
+    const payload = {
+      full_name: document.getElementById('fullName').value.trim(),
+      designation: document.getElementById('designation').value.trim(),
+      location: document.getElementById('location').value.trim()
+    };
+
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        alertBox.className = 'alert alert-success';
+        alertBox.textContent = 'Profile information updated successfully.';
+        alertBox.style.display = 'block';
+        document.getElementById('navUserName').textContent = payload.full_name;
+      } else {
+        alertBox.className = 'alert alert-danger';
+        alertBox.textContent = data.error || 'Failed to update profile.';
+        alertBox.style.display = 'block';
+      }
+    } catch (err) {
+      alertBox.className = 'alert alert-danger';
+      alertBox.textContent = 'Network or server error while updating profile.';
+      alertBox.style.display = 'block';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Save Profile Changes';
+    }
+  });
+
+  // Handle Password Form Submit
+  document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const alertBox = document.getElementById('passwordAlert');
+    const submitBtn = document.getElementById('updatePasswordBtn');
+
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    alertBox.style.display = 'none';
+
+    if (newPassword.length < 8) {
+      alertBox.className = 'alert alert-danger';
+      alertBox.textContent = 'New password must be at least 8 characters long.';
+      alertBox.style.display = 'block';
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      alertBox.className = 'alert alert-danger';
+      alertBox.textContent = 'New password and confirmation do not match.';
+      alertBox.style.display = 'block';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Updating Password...';
+
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        alertBox.className = 'alert alert-success';
+        alertBox.textContent = 'Password updated successfully! Your account credentials have been refreshed.';
+        alertBox.style.display = 'block';
+        document.getElementById('passwordForm').reset();
+        document.getElementById('mandatoryAlert').style.display = 'none';
+
+        if (isMandatoryChange) {
+          alertBox.textContent += ' Redirecting to Launchpad in 2 seconds...';
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 2000);
+        }
+      } else {
+        alertBox.className = 'alert alert-danger';
+        alertBox.textContent = data.error || 'Failed to update password.';
+        alertBox.style.display = 'block';
+      }
+    } catch (err) {
+      alertBox.className = 'alert alert-danger';
+      alertBox.textContent = 'Network or server error while updating password.';
+      alertBox.style.display = 'block';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Update Password';
+    }
+  });
+
+  // Logout handler
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+    window.location.href = '/login';
+  });
+
+  loadProfile();
+</script>
+
+</body>
+</html>

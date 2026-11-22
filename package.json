@@ -1,0 +1,29 @@
+{
+  "name": "aws-field-presales-command-centre",
+  "version": "1.0.0",
+  "description": "AWS Field Presales Command Centre — Unified Portal, Authentication & Team Management",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "seed": "node src/scripts/seed-admin.js"
+  },
+  "keywords": [
+    "aws",
+    "presales",
+    "command-centre",
+    "redington",
+    "portal"
+  ],
+  "author": "AWS Field Presales Team",
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "dependencies": {
+    "bcrypt": "5.1.1",
+    "better-sqlite3": "11.5.0",
+    "cookie-parser": "1.4.7",
+    "express": "4.21.2"
+  }
+}

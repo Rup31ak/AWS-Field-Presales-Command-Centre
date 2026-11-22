@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Launchpad — AWS Field Presales Command Centre</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-container">
+    <a href="/" class="nav-brand">
+      <img src="/assets/redington-logo.png" alt="Redington" class="nav-logo">
+      <div class="nav-divider"></div>
+      <div class="nav-titles">
+        <h1>Command Centre</h1>
+        <p>AWS Field Presales</p>
+      </div>
+    </a>
+    <div class="nav-actions">
+      <a href="/" class="nav-link active">Launchpad</a>
+      <a href="/admin" id="adminNavLink" class="nav-link" style="display:none;">Admin Console</a>
+      <a href="/profile" class="nav-link">My Profile</a>
+      <div class="user-badge">
+        <span id="navUserName">Loading...</span>
+        <span id="navUserRole" class="user-role-tag">USER</span>
+      </div>
+      <button id="logoutBtn" class="btn btn-outline btn-sm">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="page-head">
+    <h2 id="welcomeHeading">Command Centre Launchpad</h2>
+    <p>Unified access gateway for AWS Field Presales intelligence, publishing and reporting applications.</p>
+  </div>
+
+  <div class="portal-grid">
+    <!-- AWS Tech Horizon Card -->
+    <div class="card app-card">
+      <div>
+        <div class="app-card-meta">
+          <span class="user-role-tag" style="background:var(--green-900);">Monthly Publication</span>
+          <span id="thStatusBadge" class="app-status-badge status-active">Access Granted</span>
+        </div>
+        <h3 class="card-title">AWS Tech Horizon</h3>
+        <p class="card-desc">
+          Official monthly technology intelligence publication. Curates cloud launches, partner funding opportunities, GenAI radar, and architectural trends. Includes interactive magazine layout designer and Outlook email generator.
+        </p>
+      </div>
+      <div>
+        <a href="/tech-horizon" id="thLaunchBtn" class="btn btn-primary" style="width: 100%;">
+          Launch AWS Tech Horizon →
+        </a>
+      </div>
+    </div>
+
+    <!-- Monthly Report Generator Card -->
+    <div class="card app-card">
+      <div>
+        <div class="app-card-meta">
+          <span class="user-role-tag" style="background:#1E8E7E;">Executive Reporting</span>
+          <span id="mrStatusBadge" class="app-status-badge status-active">Access Granted</span>
+        </div>
+        <h3 class="card-title">Monthly Report Generator</h3>
+        <p class="card-desc">
+          Unified presales metrics and activity reporting tool. Generates executive briefings, partner pipeline velocity summaries, and architectural enablement reports for stakeholders.
+        </p>
+      </div>
+      <div>
+        <a href="/monthly-report" id="mrLaunchBtn" class="btn btn-primary" style="width: 100%;">
+          Launch Report Generator →
+        </a>
+      </div>
+    </div>
+
+    <!-- Team & Profile Card -->
+    <div class="card app-card">
+      <div>
+        <div class="app-card-meta">
+          <span class="user-role-tag" style="background:#5A7665;">Account & Security</span>
+          <span class="app-status-badge status-active">Active</span>
+        </div>
+        <h3 class="card-title">User Profile & Security</h3>
+        <p class="card-desc">
+          Manage your presales title, location, corporate contact information, and private account password. Keep your account secure with regular password updates.
+        </p>
+      </div>
+      <div>
+        <a href="/profile" class="btn btn-outline" style="width: 100%;">
+          Manage Profile & Security
+        </a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  AWS Field Presales Command Centre · Powered by Redington · Internal Use Only
+</footer>
+
+<script>
+async function loadUserData() {
+  try {
+    const res = await fetch('/api/profile');
+    if (!res.ok) {
+      window.location.href = '/login';
+      return;
+    }
+    const data = await res.json();
+    if (!data.ok || !data.user) {
+      window.location.href = '/login';
+      return;
+    }
+
+    const u = data.user;
+    document.getElementById('navUserName').textContent = u.full_name || u.username;
+    document.getElementById('navUserRole').textContent = u.role.toUpperCase();
+    document.getElementById('welcomeHeading').textContent = `Welcome, ${u.full_name || u.username}`;
+
+    if (u.role === 'Admin') {
+      document.getElementById('adminNavLink').style.display = 'inline-block';
+    }
+
+    // Check application permissions
+    if (u.tech_horizon_access !== 1) {
+      const badge = document.getElementById('thStatusBadge');
+      badge.textContent = 'Access Restricted';
+      badge.className = 'app-status-badge status-restricted';
+      const btn = document.getElementById('thLaunchBtn');
+      btn.className = 'btn btn-outline';
+      btn.textContent = 'Access Restricted';
+      btn.style.opacity = '0.6';
+      btn.style.pointerEvents = 'none';
+    }
+
+    if (u.monthly_report_access !== 1) {
+      const badge = document.getElementById('mrStatusBadge');
+      badge.textContent = 'Access Restricted';
+      badge.className = 'app-status-badge status-restricted';
+      const btn = document.getElementById('mrLaunchBtn');
+      btn.className = 'btn btn-outline';
+      btn.textContent = 'Access Restricted';
+      btn.style.opacity = '0.6';
+      btn.style.pointerEvents = 'none';
+    }
+
+  } catch (err) {
+    console.error('Failed to load user data:', err);
+  }
+}
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+  } finally {
+    window.location.href = '/login';
+  }
+});
+
+loadUserData();
+</script>
+
+</body>
+</html>
