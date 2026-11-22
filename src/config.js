@@ -38,10 +38,10 @@ const config = {
   sessionMaxAgeHours: parseInt(process.env.SESSION_MAX_AGE_HOURS || '24', 10),
   cookieSecure: process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production',
   initialAdmin: {
-    username: process.env.INITIAL_ADMIN_USERNAME || 'admin',
-    email: process.env.INITIAL_ADMIN_EMAIL || 'presales-admin@redington.com',
-    fullName: process.env.INITIAL_ADMIN_NAME || 'Presales Administrator',
-    password: process.env.INITIAL_ADMIN_PASSWORD || ''
+    username: process.env.INITIAL_ADMIN_USERNAME || 'Rupak',
+    email: process.env.INITIAL_ADMIN_EMAIL || 'rupak@redington.com',
+    fullName: process.env.INITIAL_ADMIN_NAME || 'Rupak',
+    password: process.env.INITIAL_ADMIN_PASSWORD || 'Admin@Presales2026!'
   }
 };
 

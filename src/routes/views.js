@@ -40,12 +40,11 @@ router.get('/profile', requireAuth, (req, res) => {
 });
 
 /**
- * GET /tech-horizon — Protected Launch Route for AWS Tech Horizon
+ * GET /tech-horizon — Launch Route to Standalone AWS Tech Horizon
  */
-router.get('/tech-horizon', requireAuth, requireAppAccess('tech_horizon'), (req, res) => {
-  // In Nginx production, Nginx proxies /tech-horizon/ directly to /var/www/aws-tech-horizon
-  // If reached directly on Express, serve placeholder or redirect to Nginx route
-  res.redirect('/tech-horizon/');
+router.get('/tech-horizon', (req, res) => {
+  // Redirects directly to the standalone AWS Tech Horizon running at http://13.235.2.205/
+  res.redirect('http://13.235.2.205/');
 });
 
 /**

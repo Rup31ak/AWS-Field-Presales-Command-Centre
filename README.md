@@ -70,8 +70,8 @@ Copy `.env.example` to `.env` on your deployment host and adjust as needed:
 | `SESSION_SECRET` | *(64-hex string)* | Encryption secret for cookie signing |
 | `SESSION_MAX_AGE_DAYS`| `7` | Session duration in days before re-authentication is required |
 | `COOKIE_SECURE` | `true` | Enforces `Secure` flag on session cookies (must be `true` for HTTPS) |
-| `INITIAL_ADMIN_USERNAME`| `admin` | Default username for `seed-admin.js` |
-| `INITIAL_ADMIN_EMAIL` | `admin@presales.local` | Default admin email for `seed-admin.js` |
+| `INITIAL_ADMIN_USERNAME`| `Rupak` | Default username for `seed-admin.js` |
+| `INITIAL_ADMIN_EMAIL` | `rupak@redington.com` | Default admin email for `seed-admin.js` |
 | `INITIAL_ADMIN_PASSWORD`| `Admin@Presales2026!` | Initial bootstrap password (must be changed upon first login) |
 
 ---
@@ -221,19 +221,23 @@ sudo chmod 644 /etc/ssl/command-centre/server.crt
 
 ---
 
-## 6. Nginx HTTPS Configuration (Port 443)
+## 6. Nginx HTTPS Configuration (Port 443 Only)
 
-Create an independent Nginx server block that leaves the existing AWS Tech Horizon on port 80 untouched.
+Create an independent Nginx server block that leaves the existing AWS Tech Horizon on port 80 HTTP completely untouched. Do NOT add any global HTTP-to-HTTPS redirect.
 
 Create `/etc/nginx/sites-available/command-centre`:
 ```nginx
-# AWS Field Presales Command Centre — HTTPS Reverse Proxy (Port 443)
+# ==============================================================================
+# AWS Field Presales Command Centre — HTTPS Reverse Proxy (Port 443 Only)
+# Note: Existing Port 80 HTTP site (AWS Tech Horizon) remains untouched.
+# ==============================================================================
+
 server {
     listen 443 ssl default_server;
     listen [::]:443 ssl default_server;
     server_name 13.235.2.205;
 
-    # SSL Certificates
+    # SSL Certificates (Self-signed with IP SAN: 13.235.2.205)
     ssl_certificate /etc/ssl/command-centre/server.crt;
     ssl_certificate_key /etc/ssl/command-centre/server.key;
 
@@ -250,33 +254,7 @@ server {
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
-    # Protected Subrequest Verification Endpoint
-    location = /api/auth/verify {
-        internal;
-        proxy_pass http://127.0.0.1:3000/api/auth/verify;
-        proxy_pass_request_body off;
-        proxy_set_header Content-Length "";
-        proxy_set_header X-Original-URI $request_uri;
-        proxy_set_header Cookie $http_cookie;
-    }
-
-    # Protected Route for AWS Tech Horizon
-    location /tech-horizon/ {
-        auth_request /api/auth/verify;
-        error_page 401 = @error401;
-
-        # Serve static files of AWS Tech Horizon
-        alias /var/www/aws-tech-horizon/;
-        index index.html;
-        try_files $uri $uri/ /tech-horizon/index.html;
-    }
-
-    # Redirect unauthenticated requests to login
-    location @error401 {
-        return 302 /login?redirect=$request_uri;
-    }
-
-    # Reverse Proxy to Express Command Centre Application
+    # Reverse Proxy exclusively to Command Centre Express Backend
     location / {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;

@@ -16,10 +16,10 @@ async function seedAdmin() {
 
   console.log('No administrator found. Bootstrapping initial Administrator account...');
 
-  const username = config.initialAdmin.username;
-  const email = config.initialAdmin.email;
-  const fullName = config.initialAdmin.fullName;
-  const password = config.initialAdmin.password || generateTemporaryPassword(16);
+  const username = config.initialAdmin.username || 'Rupak';
+  const email = config.initialAdmin.email || 'rupak@redington.com';
+  const fullName = config.initialAdmin.fullName || 'Rupak';
+  const password = config.initialAdmin.password || 'Admin@Presales2026!';
 
   const passwordHash = await bcrypt.hash(password, 12);
 
@@ -36,7 +36,7 @@ async function seedAdmin() {
     email,
     fullName,
     'Lead Cloud Solutions Architect',
-    'Mumbai, India',
+    'Chennai / Mumbai, India',
     passwordHash
   );
 
@@ -44,16 +44,17 @@ async function seedAdmin() {
   const credentialTxt = generateCredentialTxt(newAdmin, password);
 
   console.log('\n================================================================');
-  console.log('INITIAL ADMINISTRATOR BOOTSTRAP SUCCESSFUL');
+  console.log('  INITIAL ADMINISTRATOR BOOTSTRAP COMPLETE');
   console.log('================================================================');
-  console.log(`Username:           ${newAdmin.username}`);
-  console.log(`Email:              ${newAdmin.email}`);
-  console.log(`Temporary Password: ${password}`);
-  console.log(`Role:               Admin`);
-  console.log(`Portal URL:         ${config.portalUrl}/login`);
-  console.log('================================================================');
-  console.log('IMPORTANT: Record this password. Mandatory password change is');
-  console.log('enforced on first login.');
+  console.log(`  Portal URL:            ${config.portalUrl}/login`);
+  console.log(`  Administrator Username: ${newAdmin.username}`);
+  console.log(`  Administrator Password: ${password}`);
+  console.log(`  Account Role:          ${newAdmin.role}`);
+  console.log(`  Corporate Email:       ${newAdmin.email}`);
+  console.log('----------------------------------------------------------------');
+  console.log('  MANDATORY ACTION:');
+  console.log('  First-login password change is ENABLED. You will be prompted');
+  console.log('  to set your new personal password upon signing in.');
   console.log('================================================================\n');
 
   process.exit(0);
